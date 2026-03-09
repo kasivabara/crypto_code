@@ -12,6 +12,17 @@ def is_perfect_sq(num):
     sqrt_num = sqrt(num)
     return sqrt_num.is_integer()
 
+def matrix_to_key(matrix):
+    key = ""
+
+    rows, cols = matrix.shape
+
+    for i in range(rows):
+        for j in range(cols):
+            value = int(matrix[i][j]) % 26
+            key += chr(value + ord('A'))
+
+    return key
 
 def get_validated_message(block : int):
     message = str(input("Enter the message: ")).upper()
@@ -29,7 +40,7 @@ def get_key_matrix(key, block):
             k += 1
     return key_matrix
 
-def get_validated_key(mode=1):
+def get_validated_key(mode="1"):
     key = "XX"
     
     if mode == "1":
@@ -244,7 +255,7 @@ def decrypt(cipher_text, key, mode, key2=None):
         block = int(sqrt(len(key))) #так как матрицы должны быть n*n, то и блоки при перемножении будут одинаковыми
         cipher_vector = np.zeros((block, 1), dtype=int)
         message_vector = np.zeros((block, 1), dtype=int)
-        k1, k2 = get_key_matrix_inv(key, block), get_key_matrix_inv(key2, block)
+        k1, k2 = get_key_matrix(key, block), get_key_matrix(key2, block)
         k_i = []
         plaintext = ""
 
@@ -259,10 +270,12 @@ def decrypt(cipher_text, key, mode, key2=None):
                 k_i = np.matmul(k1, k2) % 26
                 k1, k2 = k2, k_i
 
+            k_i_inv = get_key_matrix_inv(matrix_to_key(k_i), block)
+
             for row in range(block):
                 message_vector[row][0] = ord(cipher_text[index + row]) - ord('A')
 
-            cipher_vector = np.matmul(k_i, message_vector) % 26
+            cipher_vector = np.matmul(k_i_inv, message_vector) % 26
 
             for row in range(block):
                 plaintext += chr(int(cipher_vector[row][0]) + ord('A'))
