@@ -157,6 +157,9 @@ def get_key_matrix_inv(key, block):
             det_inv = i
             break
 
+    if det_inv == 0:
+        raise ValueError("Det inverse is zero")
+
     # adj(A) = det(A) * A^(-1)
     adjugate = np.round(det * np.linalg.inv(key_matrix)).astype(int)
 
