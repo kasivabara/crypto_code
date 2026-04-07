@@ -3,14 +3,25 @@
 
 
 import numpy as np
-from math import gcd, sqrt
+from math import gcd, sqrt, isqrt
+import string 
 
+ALPHABET = string.ascii_uppercase + " _-"
+M = len(ALPHABET)
+
+
+def char_to_int(c):
+    return ALPHABET.index(c)
+
+def int_to_char(i):
+    return ALPHABET[i % M]
 
 def is_perfect_sq(num):
     if num < 0:
         return False  # Negative numbers cannot be perfect squares
-    sqrt_num = sqrt(num)
-    return sqrt_num.is_integer()
+    
+    r = isqrt(num)
+    return r * r == num
 
 def matrix_to_key(matrix):
     key = ""
@@ -19,8 +30,7 @@ def matrix_to_key(matrix):
 
     for i in range(rows):
         for j in range(cols):
-            value = int(matrix[i][j]) % 26
-            key += chr(value + ord('A'))
+            key += int_to_char(int(matrix[i][j]) % M)
 
     return key
 
@@ -28,7 +38,7 @@ def get_validated_message(block : int):
     message = str(input("Enter the message: ")).upper()
     # добавляет символы, чтобы разбить по блочно
     if len(message) % block != 0:
-        message = message.ljust( len(message) + (block - (len(message) % block)) % block, "Z")
+        message = message.ljust( len(message) + (block - (len(message) % block)) % block, "_")
     return message
 
 def get_key_matrix(key, block):
@@ -36,7 +46,7 @@ def get_key_matrix(key, block):
     k = 0
     for i in range(block):
         for j in range(block):
-            key_matrix[i][j] = ord(key[k]) - ord('A')
+            key_matrix[i][j] = char_to_int(key[k])
             k += 1
     return key_matrix
 
@@ -52,10 +62,10 @@ def get_validated_key(mode="1"):
                 continue
 
             block = int(sqrt(len(key)))
-            det_mod = int(round(np.linalg.det(get_key_matrix(key, block)))) % 26
+            det_mod = int(round(np.linalg.det(get_key_matrix(key, block)))) % M
 
-            if gcd(det_mod, 26) != 1:
-                print("\nKey matrix is not invertible modulo 26\n")
+            if gcd(det_mod, M) != 1:
+                print(f"\nKey matrix is not invertible modulo {M}\n")
                 continue
 
             break
@@ -72,10 +82,10 @@ def get_validated_key(mode="1"):
                 continue
 
             block = int(sqrt(len(key1)))
-            det_mod = int(round(np.linalg.det(get_key_matrix(key1, block)))) % 26
+            det_mod = int(round(np.linalg.det(get_key_matrix(key1, block)))) % M
 
-            if gcd(det_mod, 26) != 1:
-                print("\nKey matrix is not invertible modulo 26\n")
+            if gcd(det_mod, M) != 1:
+                print(f"\nKey matrix is not invertible modulo {M}\n")
                 continue
             
             return_keys.append(key1)
@@ -93,9 +103,9 @@ def get_validated_key(mode="1"):
                 continue
 
             block = int(sqrt(len(key2)))
-            det_mod = int(round(np.linalg.det(get_key_matrix(key2, block)))) % 26
-            if gcd(det_mod, 26) != 1:
-                print("\nKey matrix is not invertible modulo 26\n")
+            det_mod = int(round(np.linalg.det(get_key_matrix(key2, block)))) % M
+            if gcd(det_mod, M) != 1:
+                print(f"\nKey matrix is not invertible modulo {M}\n")
                 continue
 
             return_keys.append(key2)
@@ -138,22 +148,22 @@ def get_choice() -> str:
 
 def get_key_matrix_inv(key, block):
 
-    '''
+    f'''
     действуя по формулам
-    A * A^(-1) == 1 [mod 26]
+    A * A^(-1) == 1 [mod {M}]
     A^(-1) = [1/det(A)] * adj(A)
-    A^(-1) == [ det^(-1)(A) mod 26 ] * adj(A) [mod 26]
+    A^(-1) == [ det^(-1)(A) mod {M} ] * adj(A) [mod {M}]
     adj(A) = det(A) * A^(-1)
     '''
 
     key_matrix = get_key_matrix(key, block)
     det = int(round(np.linalg.det(key_matrix)))
-    det_mod = det % 26
+    det_mod = det % M
     det_inv = 0
 
-    # поиск мультипликативной обратной к det по mod 26
-    for i in range(26):
-        if (det_mod * i) % 26 == 1:
+    # поиск мультипликативной обратной к det по mod
+    for i in range(M):
+        if (det_mod * i) % M == 1:
             det_inv = i
             break
 
@@ -163,8 +173,8 @@ def get_key_matrix_inv(key, block):
     # adj(A) = det(A) * A^(-1)
     adjugate = np.round(det * np.linalg.inv(key_matrix)).astype(int)
 
-    # A^(-1) == [ det^(-1)(A) mod 26 ] * adj(A) [mod 26]
-    key_matrix_inv = (det_inv * adjugate) % 26
+    # A^(-1) == [ det^(-1)(A) mod _ ] * adj(A) [mod _]
+    key_matrix_inv = (det_inv * adjugate) % M
 
     return key_matrix_inv
     
@@ -184,12 +194,12 @@ def encrypt(message, key, mode, key2=None):
         index = 0
         while (index < len(message)):
             for row in range(block):
-                message_vector[row][0] = ord(message[index + row]) - ord('A')
+                message_vector[row][0] = char_to_int(message[index + row])
 
-            cipher_vector = np.matmul(key_matrix, message_vector) % 26
+            cipher_vector = np.matmul(key_matrix, message_vector) % M
 
             for row in range(block):
-                ciphertext += chr(int(cipher_vector[row][0]) + ord('A'))
+                ciphertext += int_to_char(int(cipher_vector[row][0]))
             
             index += block
 
@@ -213,16 +223,16 @@ def encrypt(message, key, mode, key2=None):
             elif (index//block) == 1:
                 k_i = k2
             else:
-                k_i = np.matmul(k1, k2) % 26
+                k_i = np.matmul(k1, k2) % M
                 k1, k2 = k2, k_i
 
             for row in range(block):
-                message_vector[row][0] = ord(message[index + row]) - ord('A')
+                message_vector[row][0] = char_to_int(message[index + row])
 
-            cipher_vector = np.matmul(k_i, message_vector) % 26
+            cipher_vector = np.matmul(k_i, message_vector) % M
 
             for row in range(block):
-                ciphertext += chr(int(cipher_vector[row][0]) + ord('A'))
+                ciphertext += int_to_char(int(cipher_vector[row][0]))
             
             index += block
         
@@ -243,12 +253,12 @@ def decrypt(cipher_text, key, mode, key2=None):
 
         for index in range(0, len(cipher_text), block):
             for row in range(block):
-                cipher_vector[row][0] = ord(cipher_text[index + row]) - ord('A')
+                cipher_vector[row][0] = char_to_int(cipher_text[index + row])
 
-            message_vector = np.matmul(key_matrix_inv, cipher_vector) % 26
+            message_vector = np.matmul(key_matrix_inv, cipher_vector) % M
 
             for row in range(block):
-                plaintext += chr(int(message_vector[row][0]) + ord('A'))
+                plaintext += int_to_char(int(message_vector[row][0]))
 
         return plaintext
 
@@ -270,18 +280,18 @@ def decrypt(cipher_text, key, mode, key2=None):
             elif (index//block) == 1:
                 k_i = k2
             else:
-                k_i = np.matmul(k1, k2) % 26
+                k_i = np.matmul(k1, k2) % M
                 k1, k2 = k2, k_i
 
             k_i_inv = get_key_matrix_inv(matrix_to_key(k_i), block)
 
             for row in range(block):
-                message_vector[row][0] = ord(cipher_text[index + row]) - ord('A')
+                message_vector[row][0] = char_to_int(cipher_text[index + row])
 
-            cipher_vector = np.matmul(k_i_inv, message_vector) % 26
+            cipher_vector = np.matmul(k_i_inv, message_vector) % M
 
             for row in range(block):
-                plaintext += chr(int(cipher_vector[row][0]) + ord('A'))
+                plaintext += int_to_char(int(cipher_vector[row][0]))
             
             index += block
         
