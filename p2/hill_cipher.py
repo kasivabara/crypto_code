@@ -34,12 +34,14 @@ def matrix_to_key(matrix):
 
     return key
 
-def get_validated_message(block : int):
-    message = str(input("Enter the message: ")).upper()
-    # добавляет символы, чтобы разбить по блочно
-    if len(message) % block != 0:
-        message = message.ljust( len(message) + (block - (len(message) % block)) % block, "_")
-    return message
+
+def get_padded_text(text : str, block : int):
+    padding_size = -len(text) % block
+    return text.ljust(len(text) + padding_size, "_") 
+
+def get_validated_message(block: int):
+    message = input("Enter the message: ").upper()
+    return get_padded_text(message, block)
 
 def get_key_matrix(key, block):
     key_matrix = np.zeros((block, block), dtype=int)

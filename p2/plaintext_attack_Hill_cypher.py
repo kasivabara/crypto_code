@@ -1,11 +1,12 @@
 
-from hill_cipher import get_key_matrix, get_key_matrix_inv, matrix_to_key, decrypt
+from hill_cipher import get_key_matrix, get_key_matrix_inv, matrix_to_key, decrypt, get_padded_text
 import numpy as np
 from math import sqrt
 import string
 
 ALPHABET = string.ascii_uppercase + " _-"
 M = len(ALPHABET)
+
 
 
 class test_item():
@@ -17,34 +18,17 @@ class test_item():
         self.plaintext = plaintext
         self.cyphertext = cyphertext
 
+def final_output(item_object : test_item, possible_plaintext : str):
+    c_w = 18 #minimal_column_width
+    if c_w < len(item.key):
+        c_w += (len(item.key) - c_w) + 2
 
-
-
-
+    print(f"{"Key":<{c_w}} | {"Real text":<{c_w}} | {"Ciphertext":<{c_w}} | {"Pos. plaintext":<{c_w}}")
+    print(f"{item.key:<{c_w}} | {item.plaintext[:len(item.key)] + "...":<{c_w}} | {item.cyphertext[:len(item.key)] + "...":<{c_w}} | {possible_plaintext[:len(item.key)] + "...":<{c_w}}")
+    print(f"Does the texts match? -> {get_padded_text(item.plaintext, item.block) == possible_plaintext}")
 
 test_objects = []
-common_words = [
-    "available", "copyright", "education", "community", "following",
-    "resources", "including", "directory", "insurance", "different",
-    "september", "questions", "financial", "equipment", "important",
-    "something", "committee", "reference", "companies", "computers",
-    "president", "australia", "agreement", "marketing", "solutions",
-    "technical", "statement", "downloads", "subscribe", "treatment",
-    "knowledge", "currently", "published", "corporate", "customers",
-    "materials", "countries", "standards", "political", "advertise",
-    "institute", "sponsored", "condition", "effective", "selection",
-    "executive", "necessary", "according", "christmas", "furniture",
-    "structure", "potential", "documents", "operating", "developed",
-    "telephone", "therefore", "christian", "worldwide", "publisher",
-    "excellent", "interface", "operation", "beautiful", "locations",
-    "providing", "authority", "programme", "employees", "relations",
-    "completed", "otherwise", "character", "functions", "submitted",
-    "regarding", "increased", "beginning", "specified", "sometimes",
-    "transport", "galleries", "presented", "secretary", "magazines",
-    "francisco", "described", "attention", "situation", "emergency",
-    "determine", "difficult", "satellite", "recommend", "professor",
-    "generally", "continued", "component", "guarantee", "processes"
-]
+
 
 
 
@@ -80,17 +64,11 @@ for item in test_objects:
         possible_key_matrix = np.linalg.matmul(ciphertext_matrix, known_plaintext_matrix_inv) % M
         possible_plaintext = decrypt(item.cyphertext, matrix_to_key(possible_key_matrix), "1") 
 
-        # key_matrix = get_key_matrix(item.key, item.block)
-        # key_matrix_inv = get_key_matrix_inv()
-        # ciphertext_matrix = np.transpose(np.linalg.matmul(key_matrix, known_plaintext_matrix) % 26)
-        # ciphertext = ""
-        # for row in range(item.block):
-        #     for column in range(item.block):
-        #         possible_plaintext += chr(ciphertext_matrix[row][column] + ord('A') )
-  
+        final_output(item, possible_plaintext)
+        print("-" * 40)
 
-        print(f"Key: {item.key}\nReal text: {item.plaintext[:len(item.key)]}\nCiphertext: {item.cyphertext[:len(item.key)]}\nPossible plaintext: {possible_plaintext[:len(item.key)]}\n")
-        print(f"Does the texts match? -> {item.plaintext[:len(item.key)] == possible_plaintext[:len(item.key)]}\n\n\n")
+
+
     
     if item.type_of_cipher == "2":
         ciphertext_matrix = np.transpose(get_key_matrix(item.cyphertext[:len(item.key)], item.block))
