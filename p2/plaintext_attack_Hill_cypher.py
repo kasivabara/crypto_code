@@ -46,14 +46,24 @@ test_objects = []
 
 
 with open('test_text.txt', 'r', encoding='utf-8') as file:
+    found = False
     for line in file:
         temp = line.strip("\n").split("|")
-        if (temp[0] == "1"):
-            test_objects.append(test_item(temp[0], temp[1], temp[2], temp[3]))
-            # type_of_cipher | key | plaintext | cyphertext
-        if (temp[0] == "2"):
-            test_objects.append(test_item(temp[0], temp[1], temp[3], temp[4], key2=temp[2]))
-            # type_of_cipher | key_1 | key_2 | plaintext | cyphertext
+
+        if temp[0] == "p2":
+            found = True
+            continue
+
+        if temp[0] == "p2e":
+            break
+
+        if found:
+            if (temp[0] == "1"):
+                test_objects.append(test_item(temp[0], temp[1], temp[2], temp[3]))
+                # type_of_cipher | key | plaintext | cyphertext
+            if (temp[0] == "2"):
+                test_objects.append(test_item(temp[0], temp[1], temp[3], temp[4], key2=temp[2]))
+                # type_of_cipher | key_1 | key_2 | plaintext | cyphertext
 
 mode1_items = [obj for obj in test_objects if obj.type_of_cipher == "1"]
 mode2_items = [obj for obj in test_objects if obj.type_of_cipher == "2"]
