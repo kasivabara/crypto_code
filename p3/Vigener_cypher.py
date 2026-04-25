@@ -55,13 +55,13 @@ def encrypt_vigenere(plaintext, key, mode):
     # - самоключ Виженера по шифртексту;
     elif mode == 3:
         gamma_list = list(key)
-
         for i in range(len(plaintext)):
-            if i >= len(gamma_list):
-                gamma_list.append(result[i - len(key)])
-
             g = gamma_list[i]
-            result += int_to_char(char_to_int(plaintext[i]) + char_to_int(g))
+            cipher_char = int_to_char(char_to_int(plaintext[i]) + char_to_int(g))
+            result += cipher_char
+            # Добавляем зашифрованный символ в гамму для использования через len(key) шагов
+            if len(gamma_list) < len(plaintext):
+                gamma_list.append(cipher_char)
 
     else:
         raise ValueError("Invalid mode")
@@ -84,24 +84,21 @@ def decrypt_vigenere(ciphertext, key, mode):
             result += int_to_char(char_to_int(c) - char_to_int(g))
 
     elif mode == 2:
+        # Самоключ по ОТ: гамма строится из РАСШИФРОВАННЫХ символов
         gamma_list = list(key)
-
         for i in range(len(ciphertext)):
-            if i >= len(gamma_list):
-                gamma_list.append(result[i - len(gamma_list)])
-
             g = gamma_list[i]
-            result += int_to_char(char_to_int(ciphertext[i]) - char_to_int(g))
+            plain_char = int_to_char(char_to_int(ciphertext[i]) - char_to_int(g))
+            result += plain_char
+            # Полученный символ открытого текста идет в конец гаммы
+            if len(gamma_list) < len(ciphertext):
+                gamma_list.append(plain_char)
 
     elif mode == 3:
-        gamma_list = list(key)
-
-        for i in range(len(ciphertext)):
-            if i >= len(gamma_list):
-                gamma_list.append(ciphertext[i - len(key)])
-
-            g = gamma_list[i]
-            result += int_to_char(char_to_int(ciphertext[i]) - char_to_int(g))
+        # Самоключ по ШТ: гамма — это просто Ключ + Шифртекст
+        gamma = (key + ciphertext)[:len(ciphertext)]
+        for c, g in zip(ciphertext, gamma):
+            result += int_to_char(char_to_int(c) - char_to_int(g))
 
     else:
         raise ValueError("Invalid mode")
